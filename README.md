@@ -1,2 +1,3 @@
-# CS350
+# PyroBlocker
+CS350:
 Adult Content Filter Chrome Extension
