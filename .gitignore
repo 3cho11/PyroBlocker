@@ -1,4 +1,4 @@
 **/__pycache__/
 dataset/
-models/
-chrome-extension/titleCustomModelLLM/public/models/
+**/onnxModels/
+*.onnx
