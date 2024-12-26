@@ -4,11 +4,11 @@ import { pipeline, env } from '@xenova/transformers';
 
 // Enable the loading of local models from the filesystem
 env.allowLocalModels = true;
-// Disable the loading of remote models from the Hugging Face Hub:
+// Disable the loading of remote models from the Hugging Face Hub
 env.allowRemoteModels = false;
-// Set the path to the local model directory
-env.localModelPath = chrome.runtime.getURL('onnx-model');
-
+// Set the local model path to the onnx-model directory
+env.localModelPath = chrome.runtime.getURL(''); // Explicit local model path
+console.log('env.localModelPath', env.localModelPath);
 // Due to a bug in onnxruntime-web, we must disable multithreading for now.
 // See https://github.com/microsoft/onnxruntime/issues/14445 for more information.
 env.backends.onnx.wasm.numThreads = 1;
@@ -19,7 +19,8 @@ env.backends.onnx.wasm.numThreads = 1;
 // 
 class PipelineSingleton {
     static task = 'text-classification';
-    static model = chrome.runtime.getURL('onnx-model'); // Resolve local folder path
+    // env.localModelPath already specifies model location so we skip defining this.model
+    static model = 'onnx-model'; // Explicit model path
     static instance = null;
 
     static async getInstance(progress_callback = null) {

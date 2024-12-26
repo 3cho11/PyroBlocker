@@ -1,4 +1,4 @@
-from optimum.onnxruntime import ORTModelForSequenceClassification
+from transformers import AutoModelForSequenceClassification
 
-model = ORTModelForSequenceClassification.from_pretrained("valurank/finetuned-distilbert-adult-content-detection",from_transformers=True)
-model.save_pretrained("/home/3cho11/Documents/PyroBlocker/models/onnx/model1/")
+model = AutoModelForSequenceClassification.from_pretrained("valurank/finetuned-distilbert-adult-content-detection")
+model.save_pretrained("/home/3cho11/Documents/PyroBlocker/onnxModels/model2/")
