@@ -13,13 +13,20 @@ console.log('env.localModelPath', env.localModelPath);
 // See https://github.com/microsoft/onnxruntime/issues/14445 for more information.
 env.backends.onnx.wasm.numThreads = 1;
 
+if (navigator.gpu) {
+    console.log("WebGPU is supported on this browser.");
+} else {
+    console.log("WebGPU is not supported on this browser.");
+}
+
+
+
 //////////////////////////////////////////////////////////////
 
 //////////////////////// 1. Model Setup //////////////////////
 // 
 class PipelineSingleton {
     static task = 'text-classification';
-    // env.localModelPath already specifies model location so we skip defining this.model
     static model = 'onnx-model'; // Explicit model path
     static instance = null;
 
@@ -50,25 +57,37 @@ const classify = async (text) => {
     return result;
 };
 
+
 //////////////////////////////////////////////////////////////
 
 ////////////////////// 2. Message Events /////////////////////
 // 
 // Listen for messages from content.js, process it, and send the result back.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('sender', sender)
-    if (message.action !== 'classify') return; // Ignore messages that are not meant for classification.
 
-    // Run model prediction asynchronously
-    (async function () {
-        // Perform classification
-        let result = await classify(message.text);
+    // content.js may ask for current active tab
+    if (message.action === 'getActiveTab') {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0) {
+                sendResponse(tabs[0]);
+            } else {
+                sendResponse(null);
+            }
+        });
+        return true; // Required to allow asynchronous `sendResponse`
+    }
 
-        // Send response back to content.js
-        sendResponse(result);
-    })();
+    // content.js may ask for text classification
+    if (message.action === 'classify') {
+        // Run model prediction asynchronously
+        (async function () {
+            // Perform classification
+            let result = await classify(message.text);
 
-    // return true to indicate we will send a response asynchronously
-    // see https://stackoverflow.com/a/46628145 for more information
-    return true;
+            // Send response back to content.js
+            sendResponse(result);
+        })();
+        return true; // Required to allow asynchronous `sendResponse`
+    }
+    return; // Ignore other messages
 });

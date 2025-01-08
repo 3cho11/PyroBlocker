@@ -1,6 +1,3 @@
-// content.js - the content scripts which is run in the context of web pages, and has access
-// to the DOM and other web APIs.
-
 const getSentiment = async (text) => {
     const message = {
         action: 'classify',
@@ -22,17 +19,36 @@ const getSentiment = async (text) => {
     return JSON.stringify(response, null, 2);
 };
 
-chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-    const activeTab = tabs[0]; // Get the active tab in the current window
+document.addEventListener('DOMContentLoaded', async () => {
+    // Request active tab info from the background script
+    const activeTab = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'getActiveTab' }, (activeTab) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(activeTab);
+            }
+        });
+    });
 
-    // display title
-    const title = activeTab.title;
-    document.getElementById('title').innerText = title;
-    // Wait for the sentiment analysis result before displaying it
-    try {
-        const sentiment = await getSentiment(title);
-        document.getElementById('sentiment').innerText = sentiment;
-    } catch (error) {
-        console.error("Error classifying sentiment:", error);
-    }
+    const displayTitleSentiment = async (activeTab) => {
+        // Display title
+        const title = activeTab.title;
+        console.log("Title:", title);
+        console.log(typeof document);
+        console.log("titleElement", typeof document.getElementById('title'));
+        console.log("titleElementText", typeof document.getElementById('title').innerText);
+        document.getElementById('title').innerText = title;
+
+        // Wait for the sentiment analysis result before displaying it
+        try {
+            const sentiment = await getSentiment(title);
+            document.getElementById('sentiment').innerText = sentiment;
+        } catch (error) {
+            console.error("Error classifying sentiment:", error);
+        }
+    };
+
+    // Call displayTitleSentiment with the active tab
+    displayTitleSentiment(activeTab);
 });
