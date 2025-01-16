@@ -1,4 +1,23 @@
-// offscreen.js 
+// offscreen.js
+const log = async (...args) => {
+    const message = {
+        target: 'background',
+        action: 'log',
+        data: args.map(arg => {
+            try {
+                return JSON.stringify(arg, (key, value) =>
+                    typeof value === 'bigint' ? value.toString() : value, // Handle BigInt
+                    2
+                );
+            } catch (error) {
+                return `Non-serializable data: ${error.message}`;
+            }
+        }),
+    };
+    chrome.runtime.sendMessage(message);
+};
+log('offscreen.js')
+
 import { pipeline, env, AutoTokenizer, AutoModel, Tensor, mean_pooling } from '@xenova/transformers';
 
 //import * as ort from "https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/esm/ort.webgpu.min.js";
@@ -141,7 +160,17 @@ function pathJoin(...parts) {
     })
     return parts.join('/');
 }
-
+/**
+ * Compute softmax of logits
+ *
+ * @param {float[]} logits to be converted to probabilities
+ * @returns {float[]} probabilities
+ */
+function softmax(logits) {
+    const expValues = logits.map(Math.exp); // Apply exponent to each logit
+    const sumExp = expValues.reduce((sum, val) => sum + val, 0); // Sum of all exponentials
+    return expValues.map(val => val / sumExp); // Normalize
+}
 
 class PipelineSingleton {
     static task = 'text-classification';
@@ -201,31 +230,19 @@ class PipelineSingleton {
     }
 }
 
-const log = async (...args) => {
-    const message = {
-        target: 'background',
-        action: 'log',
-        data: args,
-    }
-    chrome.runtime.sendMessage(message)
-};
-
-chrome.runtime.onMessage.addListener(async (msg) => {
-    if (msg.target !== "offscreen") return;
-    //log(msg);
-
-    const sentences = [msg.text, 'I love walking my dog.'];
+const classify = async (msg) => {
+    const sentences = [msg.text];
     const tokenizer = await PipelineSingleton.getTokenizer(x => {
         // We also add a progress callback to the pipeline so that we can
         // track model loading.
         //self.postMessage(x);
-        log(x);
+        log("tokenizer=", x);
     });
     const model_weights = await PipelineSingleton.getModelBuffer(x => {
         // We also add a progress callback to the pipeline so that we can
         // track model loading.
         //self.postMessage(x);
-        log(x);
+        log("model_weights=", x);
     });
 
     //adapted from pipeline.js FeatureExtractionPipeline._call(texts, {
@@ -237,7 +254,6 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         truncation: true,
     });
     //console.log("input_ids=",model_inputs.input_ids);
-    log("model_inputs=", model_inputs);
 
     // create session, set options
     const opt = {
@@ -263,13 +279,63 @@ chrome.runtime.onMessage.addListener(async (msg) => {
     log("session.inputNames", session.inputNames);
     log("session.outputNames", session.outputNames);
 
+    // this may return logits or a tensor still in need of mean pooling and normalization
     let encoder_outputs = await encoderForward(session, model_inputs);
     log("encoder_outputs=", encoder_outputs);
 
-    let result_tensor = encoder_outputs.last_hidden_state ?? encoder_outputs.logits;
-    //pooling === 'mean'
-    result_tensor = mean_pooling(result_tensor, model_inputs.attention_mask);
-    //normalize === true
-    result_tensor = result_tensor.normalize(2, -1);
-    log("WebGPU result=", JSON.stringify(result_tensor, null, 2));
+    let result_tensor;
+    // If our model returns logits directly
+    if (encoder_outputs.logits) {
+        result_tensor = encoder_outputs.logits;
+    } else {
+        result_tensor = encoder_outputs.last_hidden_state;
+        // logits not detected, mean pooling + normalisation still needed
+        // pooling === 'mean'
+        result_tensor = mean_pooling(result_tensor, model_inputs.attention_mask);
+        // normalize === true
+        result_tensor = result_tensor.normalize(2, -1);
+    }
+
+    const logits = result_tensor.data;
+    console.log("logits:",logits);
+
+    const probabilities = softmax(logits)
+    console.log("probabilities:",probabilities);
+
+    const label_index = probabilities.indexOf(Math.max(...probabilities))
+    console.log("label_index:", label_index);
+
+    //**
+    // for custom model.onnx, we should have access to:
+    // id2label = config.get("id2label", {})
+    // print(f"id2label mapping: {id2label}")
+    //  */ 
+    const labels =[ 'NEGATIVE', 'POSITIVE'];
+    const predicted_label = labels[label_index];
+    console.log("predicted_label:", predicted_label);
+
+    const prediction = {
+        label: predicted_label,
+        score: probabilities[label_index]
+    };
+    return prediction;
+}
+
+chrome.runtime.onConnect.addListener((port) => {
+    if (port.name === "offscreen") {
+        console.log("Connected to background.js");
+
+        port.onMessage.addListener( async (message) => {
+            if (message.action === "classify") {
+                console.log("Classify request:", message.text);
+                const result = await classify(message);
+                console.log("result in offscreen:",result);
+                port.postMessage({ success: true, result });
+            }
+        });
+
+        port.onDisconnect.addListener(() => {
+            console.log("Disconnected from background.js");
+        });
+    }
 });

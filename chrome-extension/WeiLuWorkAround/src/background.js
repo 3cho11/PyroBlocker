@@ -51,23 +51,44 @@ class PipelineSingleton {
 
 // Create generic classify function, which will be reused for the different types of events.
 const classify = async (text) => {
-    console.log("background classify");
-    await createOffscreen();
-    await chrome.runtime.sendMessage({
-        target: "offscreen",
-        text: text
-    });
+    try {
+        await createOffscreen();
+        const message = {
+            action: "classify",
+            text: text,
+        };
 
-    // Get the pipeline instance. This will load and build the model when run for the first time.
-    let model = await PipelineSingleton.getInstance((data) => {
-        // You can track the progress of the pipeline creation here.
-        // e.g., you can send `data` back to the UI to indicate a progress bar
-        // console.log('progress', data)
-    });
+        // Wrap chrome.runtime.sendMessage in a Promise so we can await it
+        return new Promise((resolve, reject) => {
+            const port = chrome.runtime.connect({ name: "offscreen" });
 
-    // Actually run the model on the input text
-    let result = await model(text);
-    return result;
+            port.onMessage.addListener((response) => {
+                if (response.success) {
+                    resolve(response.result);
+                } else {
+                    reject(new Error(response.error));
+                }
+                port.disconnect(); // Close the port after response
+            });
+
+            port.onDisconnect.addListener(() => {
+                console.log("Port disconnected");
+            });
+
+            port.postMessage(message);
+        });
+    } catch (error) {
+        // Log the error with additional debugging information
+        if (error instanceof Error) {
+            console.error("Error in classify function:", error.message);
+        } else if (typeof error === "object") {
+            console.error("Error in classify function:", JSON.stringify(error, null, 2));
+        } else {
+            console.error("Error in classify function:", String(error));
+        }
+
+        throw error; // Optionally rethrow to propagate it further
+    }
 };
 
 
@@ -78,34 +99,35 @@ const classify = async (text) => {
 // 
 // Listen for messages from content.js, process it, and send the result back.
 let latestMessage = null;
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('sender', sender)
+chrome.runtime.onMessage.addListener( async (message, sender, sendResponse) => {
+    
+    // offscreen.js may ask to log some information
+    if (message.action === 'log') {
+        console.log("from offscreen", message.data);
+    }
 
     // content.js may ask for text classification
-    if (message.target === 'background' && message.action === 'classify') {
-        if (message.action === 'log') {
-            console.log("from offscreen", message.data);
+    if (message.action === 'classify') {
+        try {
+            // Send the text to offscreen.js for classification
+            const result = await classify(message.text); // Assume classify is an async function
+            console.log("Classification finished in offscreen.js:",result);
+
+            latestMessage = {
+                title: message.text,
+                sentiment: result
+            }
+            sendResponse({ success: true, result });
+        } catch (error) {
+            console.error("Error during classification:", error);
+            latestMessage = "Error: Classification failed"; // Save error to latestMessage
+            sendResponse({ success: false, error: error.message });
         }
-        // Run model prediction asynchronously
-        (async function () {
-            // Perform classification
-            let result = await classify(message.text);
-
-            // Send response back to content.js
-            sendResponse(result);
-        })();
-        return true; // Required to allow asynchronous `sendResponse`
     }
 
-    else if (message.action === 'updatePopup') {
-        // Update the latest message
-        latestMessage = {
-            title: message.title,
-            sentiment: message.sentiment,
-        };
-    }
-
+    // popup is opened and popup.js asks for title and sentiment
     else if (message.action === 'getTitleAndSentiment') {
+        console.log("fetching latest message:", latestMessage);
         sendResponse(latestMessage);
         return true // Required for async sendResponse3
     }

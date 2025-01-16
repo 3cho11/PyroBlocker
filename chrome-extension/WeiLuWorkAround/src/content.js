@@ -5,7 +5,7 @@ console.log("content.js");
  * @param {*} text the text to classify
  * @returns {Promise} Promise that resolves to the sentiment analysis result
  */
-const getSentiment = async (text) => {
+const doTitleAnalysis = async (text) => {
     const message = {
         target: 'background',
         action: 'classify',
@@ -28,24 +28,9 @@ const getSentiment = async (text) => {
     return response;
 };
 
-/**
- * 
- * @param {*} title title to display
- * @param {*} sentiment sentiment to display
- * @returns true if the message was sent successfully, false otherwise
- */
-const displayResults = async (title, sentiment) => {
-    console.log("sending message to background");
-    const message = {
-        action: 'updatePopup',
-        title: title,
-        sentiment: sentiment,
-    };
-    chrome.runtime.sendMessage(message)
-};
 
 const title = document.title;
 console.log("title:", title);
-const sentiment = await getSentiment(title);
-console.log("sentiment:", sentiment);
-displayResults(title, sentiment);
+
+const result = await doTitleAnalysis(title);
+console.log("result:", result);
