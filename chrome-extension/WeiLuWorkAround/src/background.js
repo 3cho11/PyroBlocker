@@ -117,11 +117,9 @@ chrome.runtime.onMessage.addListener( async (message, sender, sendResponse) => {
                 title: message.text,
                 sentiment: result
             }
-            sendResponse({ success: true, result });
         } catch (error) {
             console.error("Error during classification:", error);
             latestMessage = "Error: Classification failed"; // Save error to latestMessage
-            sendResponse({ success: false, error: error.message });
         }
     }
 

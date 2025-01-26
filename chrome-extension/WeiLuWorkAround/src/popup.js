@@ -19,5 +19,3 @@ chrome.runtime.sendMessage(message, (response) => {
         }
     }
 });
-
-
