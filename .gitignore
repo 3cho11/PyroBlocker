@@ -2,4 +2,3 @@
 dataset/
 **/onnxModels/
 **/onnx-model/
-*.onnx
