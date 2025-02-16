@@ -2,4 +2,7 @@
 dataset/
 **/onnxModels/
 **/onnx/
-*.onnx
+**.onnx
+**/package-lock.json
+**/build/
+**/node_modules/
