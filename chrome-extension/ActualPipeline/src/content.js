@@ -90,30 +90,53 @@ function getData() {
 
     return dataPoint;
 }
-  
 
-/**
- * Send a message to the background script to classify the sentiment of the given text
- * @param {*} text the text to classify
- */
-const classify = async (pageData) => {
-    const message = {
-        target: 'background',
-        action: 'classify',
-        pageData: pageData,
-    };
-
-    chrome.runtime.sendMessage(message);
-};
 
 const blockPage = async () => {
-    location.replace("https://www.google.com");
+    console.log("____________BLOCKING PAGE____________\n");
+    // location.replace("https://www.google.com");
 }
 
+// data collection
+
 const pageData = getData();
-console.log(JSON.stringify(pageData, null, 2));
+console.log("____________RAW DATA____________\n\n" + JSON.stringify(pageData, null, 2));
+
+
+// pre-processing
 
 const pipeline = new ClassificationPipeline(3);
 const processed_pageData = pipeline.preprocess(pageData);
-console.log(JSON.stringify(processed_pageData, null, 2));
-await classify(processed_pageData);
+console.log("____________ARRAY ELEMENTS CROPPED____________\n\n" + JSON.stringify(processed_pageData, null, 2));
+
+
+// classification
+
+const raw_scores = await pipeline.classify(processed_pageData);
+console.log("____________RAW LLM SCORES____________\n (fields with missing values set to 0)\n\n" 
+    + JSON.stringify(raw_scores, null, 2));
+
+
+// post-processing
+
+
+// apply power mean to all arrays
+const power_mean_scores = pipeline.powerMeanAllArrays(raw_scores);
+console.log("____________POWER MEAN APPLIED TO ARRAY ELEMENTS____________\n (we now have 1 score per field)\n\n" 
+    + JSON.stringify(power_mean_scores, null, 2));
+
+  
+// logistic regression to get singular value
+const regression_score = pipeline.logisticRegression(power_mean_scores);
+console.log("____________REGRESSION SCORE (FINAL RESULT)____________\n\n" + "score = " + regression_score);
+
+
+// final decision
+const final_prediction = pipeline.getLabel(regression_score)
+console.log("____________FINAL PREDICTION____________\n\n" + "label = " + final_prediction);
+
+
+// block page if adult
+if (final_prediction === "ADULT") {
+    blockPage();
+}

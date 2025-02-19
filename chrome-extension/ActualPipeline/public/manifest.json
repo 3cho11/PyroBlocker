@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "WebGPU Local Model",
-  "description": "Wei Lu Workaround with custom model",
-  "version": "0.0.1",
+  "name": "PyroBlocker",
+  "description": "Local model, WebGPU, full JSON pipeline",
+  "version": "2.0.0",
   "permissions": [
     "offscreen",
     "activeTab",
@@ -18,7 +18,10 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "*://*/*"
+      ],
+      "exclude_matches": [
+        "*://*.google.com/*"
       ],
       "js": [
         "content.js"

@@ -31,40 +31,38 @@ export class ClassificationPipeline {
         this.regression_weights = new Map(regression_weights);
     }
 
-    // crop arrays to specified LENGTHs
+    // remove duplicates then crop arrays to specified LENGTHs
     preprocess = (pageData) => {
-        return {
-            ...pageData,
-            p_elements: pageData.p_elements.slice(0, this.p_LENGTH),
-            h1_elements: pageData.h1_elements.slice(0, this.h1_LENGTH),
-            h2_elements: pageData.h2_elements.slice(0, this.h2_LENGTH),
-            internal_links: pageData.internal_links.slice(0, this.internal_links_LENGTH),
-            external_links: pageData.external_links.slice(0, this.external_links_LENGTH)
-        };
+        // Helper function to remove duplicates from an array
+        const removeDuplicates = (arr) => {
+            return arr.filter((value, index, self) => self.indexOf(value) === index);
+        }
+
+        const removeDuplicatesFromArrays = (pageData) => {
+            return {
+                ...pageData,
+                p_elements: removeDuplicates(pageData.p_elements),
+                h1_elements: removeDuplicates(pageData.h1_elements),
+                h2_elements: removeDuplicates(pageData.h2_elements),
+                internal_links: removeDuplicates(pageData.internal_links),
+                external_links: removeDuplicates(pageData.external_links)
+            };
+        }
+
+        const cropData = (pageData) => {
+            return {
+                ...pageData,
+                p_elements: pageData.p_elements.slice(0, this.p_LENGTH),
+                h1_elements: pageData.h1_elements.slice(0, this.h1_LENGTH),
+                h2_elements: pageData.h2_elements.slice(0, this.h2_LENGTH),
+                internal_links: pageData.internal_links.slice(0, this.internal_links_LENGTH),
+                external_links: pageData.external_links.slice(0, this.external_links_LENGTH)
+            };
+        }
+        
+        const preprocessed_pageData = removeDuplicatesFromArrays(pageData);
+        return cropData(preprocessed_pageData);
     }
-
-    createOffscreen = async () => {
-        if (await chrome.offscreen.hasDocument()) return;
-        await chrome.offscreen.createDocument({
-            url: "offscreen.html",
-
-            /* valid reasons: 
-            AUDIO_PLAYBACK, 
-            BLOBS, 
-            CLIPBOARD, 
-            DISPLAY_MEDIA, 
-            DOM_PARSER, 
-            DOM_SCRAPING, 
-            IFRAME_SCRIPTING,
-            TESTING, 
-            USER_MEDIA, 
-            WEB_RTC.
-            */
-            reasons: ["BLOBS"],
-            justification: "testing",
-        });
-    }
-
 
     /**
      * Computes the power mean (generalized mean) of an array of numbers.
@@ -89,8 +87,41 @@ export class ClassificationPipeline {
         return power(sum / arr.length, 1 / p);
     }
 
-    getLabel = async (score) => {
-        return score > 0 ? "adult" : "safe";
+    getLabel = (score) => {
+        return score > 0 ? "ADULT" : "SAFE";
+    }
+
+    sendPortMessage = async (port_name, message) => {
+        // Wrap chrome.runtime.sendMessage in a Promise so we can await it
+        return new Promise((resolve, reject) => {
+            const port = chrome.runtime.connect({ name: port_name });
+
+            port.onMessage.addListener((response) => {
+                if (response.success) {
+                    resolve(response.result);
+                } else {
+                    reject(new Error(response.error));
+                }
+                port.disconnect(); // Close the port after response
+            });
+
+            port.onDisconnect.addListener(() => {
+                console.log("Port disconnected");
+            });
+
+            port.postMessage(message);
+        }).catch((error) => {
+            // Log the error with additional debugging information
+            if (error instanceof Error) {
+                console.error("Error in sendPortMessage function:", error.message);
+            } else if (typeof error === "object") {
+                console.error("Error in sendPortMessage function:", JSON.stringify(error, null, 2));
+            } else {
+                console.error("Error in sendPortMessage function:", String(error));
+            }
+
+            throw error; // Optionally rethrow to propagate it further
+        });
     }
 
     /**
@@ -101,50 +132,32 @@ export class ClassificationPipeline {
      * It returns a Promise that resolves with the classification results or rejects with an error.
      * 
      * @param {Object} pageData - The data of the page elements to be classified.
-     * @returns {Promise<Object>} A promise that resolves with the classification results.
-     * @throws {Error} Throws an error if the classification process fails.
+     */
+    classifyInOffscreen = async (pageData) => {
+        const port_name = "offscreen";
+        const message = {
+            action: "classify",
+            pageData: pageData
+        };
+        return this.sendPortMessage(port_name, message);
+    }
+
+    /**
+     * Sends data from content.js to background.js for classification
+     * 
+     * @param {Object} pageData - The data of the page elements to be classified.
      */
     classify = async (pageData) => {
-        try {
-            await this.createOffscreen();
-            // since the port is named offscreen we won't also pass a target attribute
-            const message = {
-                action: "classify",
-                pageData: pageData
-            };
+        // const port_name = "background";
+        // // since the port is named offscreen we won't also pass a target attribute
+        const port_name = "background";
+        const message = {
+            action: "classify",
+            pageData: pageData
+        };
+        return this.sendPortMessage(port_name, message);
+    }
 
-            // Wrap chrome.runtime.sendMessage in a Promise so we can await it
-            return new Promise((resolve, reject) => {
-                const port = chrome.runtime.connect({ name: "offscreen" });
-
-                port.onMessage.addListener((response) => {
-                    if (response.success) {
-                        resolve(response.result);
-                    } else {
-                        reject(new Error(response.error));
-                    }
-                    port.disconnect(); // Close the port after response
-                });
-
-                port.onDisconnect.addListener(() => {
-                    console.log("Port disconnected");
-                });
-
-                port.postMessage(message);
-            });
-        } catch (error) {
-            // Log the error with additional debugging information
-            if (error instanceof Error) {
-                console.error("Error in classify function:", error.message);
-            } else if (typeof error === "object") {
-                console.error("Error in classify function:", JSON.stringify(error, null, 2));
-            } else {
-                console.error("Error in classify function:", String(error));
-            }
-
-            throw error; // Optionally rethrow to propagate it further
-        }
-    };
 
     /**
      * Take each array-type element in pageData and return a singular value - the power mean
@@ -156,16 +169,20 @@ export class ClassificationPipeline {
      * 
      * @returns {Object} pageData with power mean applied to each array-type element
      */
-    powerMeanAllArrays = (pageData, ) => {
-        // apply power array to all array elements
+    powerMeanAllArrays = (pageData) => {
+        // Helper function to apply powerMean only if the array has not been set to 0 due to being empty
+        const applyPowerMean = (arr, power) => {
+            return (arr !== 0) ? this.powerMean(arr, power) : arr;
+        };
+
+        // Create result object, only including fields with non-empty arrays
         const result = {
             ...pageData,
-            p_elements: this.powerMean(pageData.p_elements, this.p_POWER),
-            h1_elements: this.powerMean(pageData.h1_elements, this.h1_POWER),
-            h2_elements: this.powerMean(pageData.h2_elements, this.h2_POWER),
-            internal_links: this.powerMean(pageData.internal_links, this.internal_links_POWER),
-            external_links: this.powerMean(pageData.external_links, this.external_links_POWER)
-
+            p_elements: applyPowerMean(pageData.p_elements, this.p_POWER),
+            h1_elements: applyPowerMean(pageData.h1_elements, this.h1_POWER),
+            h2_elements: applyPowerMean(pageData.h2_elements, this.h2_POWER),
+            internal_links: applyPowerMean(pageData.internal_links, this.internal_links_POWER),
+            external_links: applyPowerMean(pageData.external_links, this.external_links_POWER)
         };
         return result;
     }
@@ -179,14 +196,11 @@ export class ClassificationPipeline {
      */
     logisticRegression = (pageData) => {
 
-        const logisticFunction = (x) => 1 / (1 + Math.exp(-x));
-
         // get the weighted sum of the pageData
         const weightedSum = Object.entries(pageData).reduce((acc, [type, score]) => {
             return acc + score * this.regression_weights.get(type);
         }, 0);
 
-        return logisticFunction(weightedSum);
+        return Math.tanh(weightedSum);
     }
-
 }

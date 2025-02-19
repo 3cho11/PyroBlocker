@@ -1,22 +1,5 @@
 // offscreen.js
-const log = async (...args) => {
-    const message = {
-        target: 'background',
-        action: 'log',
-        data: args.map(arg => {
-            try {
-                return JSON.stringify(arg, (key, value) =>
-                    typeof value === 'bigint' ? value.toString() : value, // Handle BigInt
-                    2
-                );
-            } catch (error) {
-                return `Non-serializable data: ${error.message}`;
-            }
-        }),
-    };
-    chrome.runtime.sendMessage(message);
-};
-log('offscreen.js')
+console.log("offscreen.js");
 
 import { pipeline, env, PreTrainedTokenizer, AutoModel, Tensor, mean_pooling } from '@xenova/transformers';
 
@@ -121,8 +104,8 @@ async function sessionRun(session, inputs) {
         return output;
     } catch (e) {
         // This usually occurs when the inputs are of the wrong type.
-        log(`An error occurred during model execution: "${e}".`);
-        log('Inputs given to model:', checkedInputs);
+        console.log(`An error occurred during model execution: "${e}".`);
+        console.log('Inputs given to model:', checkedInputs);
         throw e;
     }
 }
@@ -366,9 +349,9 @@ const flattenSentences = (pageData) => {
  */
 const reformatResults = (predictionArray) => {
     const result = {
-        url: null,
-        title: null,
-        description: null,
+        url: 0,
+        title: 0,
+        description: 0,
         p_elements: [],
         h1_elements: [],
         h2_elements: [],
@@ -404,8 +387,16 @@ const reformatResults = (predictionArray) => {
                 break;
             default:
                 console.warn(`Unknown prediction type: ${prediction.type}`);
-        }
+        } 
     }
+    
+    // Set empty arrays to 0
+    if (result.p_elements.length === 0) result.p_elements = 0;
+    if (result.h1_elements.length === 0) result.h1_elements = 0;
+    if (result.h2_elements.length === 0) result.h2_elements = 0;
+    if (result.internal_links.length === 0) result.internal_links = 0;
+    if (result.external_links.length === 0) result.external_links = 0;
+    
     return result;
 };
  
@@ -419,7 +410,8 @@ const classify = async (pageData) => {
 
     // Extract an array of sentences for the classifier
     const sentences = textObjects.map(obj => obj.sentence);
-    console.log("Sentences for classification:", sentences);
+    // console.log("Sentences for classification:", sentences);
+    console.log("____________SENTENCES FOR CLASSIFICATION____________\n\n" + JSON.stringify(sentences, null, 2));
 
     // Classify the array of sentences
     const scores = await classifySentenceArray(sentences); // array of scores
@@ -431,7 +423,7 @@ const classify = async (pageData) => {
     }));
     console.log("Classification results:", arrResults);
 
-    // Post-process back into json format grouped by type
+    // Post-process back into json format grouped by type setting empty elements to 0
     const jsonResults = reformatResults(arrResults);
 
     return jsonResults;
@@ -480,7 +472,7 @@ const classifySentenceArray = async (sentences) => {
     for (let i = 0; i < (num_sentences * num_categories); i += num_categories) {
         logit_tuples.push(logits_array.slice(i, i + num_categories));
     }
-
+    console.log("logit_tuples:",logit_tuples);
     const probability_tuples = logit_tuples.map(softmax);
     console.log("probability_tuples:",probability_tuples);
 
@@ -502,12 +494,13 @@ const classifySentenceArray = async (sentences) => {
 
 chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "offscreen") {
-        console.log("Connected to background.js");
+        console.log("background-offscreen connection established");
 
         port.onMessage.addListener( async (message) => {
             if (message.action === "classify") {
                 console.log("Classify request:", message.pageData);
                 const raw_scores = await classify(message.pageData);
+                // const raw_scores = "test";
                 console.log("raw_scores in offscreen:", raw_scores);
                 port.postMessage({ success: true, result: raw_scores });
             }
