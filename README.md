@@ -16,6 +16,7 @@ Follow these steps to build and run the extension locally:
 ```bash
 git clone https://github.com/3cho11/PyroBlocker
 cd your-repo-name
+```
 
 ### 2. Install dependencies
 
