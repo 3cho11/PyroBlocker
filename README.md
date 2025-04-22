@@ -50,7 +50,7 @@ Then refresh the extension in Chrome (chrome://extensions) to apply updates.
 
 
 ## 📂 Project Structure
-
+```bash
 ├── chromeExtensions/       # all chrome extenions used during development
 │   └── ...
 ├── dataScraping/           
@@ -66,6 +66,7 @@ Then refresh the extension in Chrome (chrome://extensions) to apply updates.
 ├── Models                  # local download of candidate models
 ├── ...
 └── README.md
+```
 
 🧪 Testing
 
