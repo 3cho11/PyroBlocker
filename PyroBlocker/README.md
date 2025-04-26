@@ -1,35 +1,47 @@
+# PyroBlocker Chrome Extension
 
-# Transformers.js - Sample browser extension
+## 📦 Requirements
 
-An example project to show how to run 🤗 Transformers in a browser extension. Although we only provide instructions for running in Chrome, it should be similar for other browsers.
+- [Node.js](https://nodejs.org/) (v16 or later recommended)
+- npm (comes with Node.js)
 
-## Getting Started
-1. Clone the repo and enter the project directory:
-    ```bash
-    git clone https://github.com/huggingface/transformers.js.git
-    cd transformers.js/examples/extension/
-    ```
-1. Install the necessary dependencies:
-    ```bash
-    npm install 
-    ```
+## 🔧 Setup Instructions
 
-1. Build the project:
-    ```bash
-    npm run build 
-    ```
+Follow these steps to build and run the extension locally:
 
-1. Add the extension to your browser. To do this, go to `chrome://extensions/`, enable developer mode (top right), and click "Load unpacked". Select the `build` directory from the dialog which appears and click "Select Folder".
+### 1. Clone the repository
 
-1. That's it! You should now be able to open the extension's popup and use the model in your browser!
+```bash
+git clone https://github.com/3cho11/PyroBlocker
+cd Pyroblocker
+```
 
-## Editing the template
+### 2. Install dependencies
 
-We recommend running `npm run dev` while editing the template as it will rebuild the project when changes are made. 
+npm install
 
-All source code can be found in the `./src/` directory:
-- `background.js` ([service worker](https://developer.chrome.com/docs/extensions/mv3/service_workers/)) - handles all the requests from the UI, does processing in the background, then returns the result. You will need to reload the extension (by visiting `chrome://extensions/` and clicking the refresh button) after editing this file for changes to be visible in the extension.
+### 3. Build the extension
 
-- `content.js` ([content script](https://developer.chrome.com/docs/extensions/mv3/content_scripts/)) - contains the code which is injected into every page the user visits. You can use the `sendMessage` api to make requests to the background script. Similarly, you will need to reload the extension after editing this file for changes to be visible in the extension.
+To start development and bundle the project using Webpack:
 
-- `popup.html`, `popup.css`, `popup.js` ([toolbar action](https://developer.chrome.com/docs/extensions/reference/action/)) - contains the code for the popup which is visible to the user when they click the extension's icon from the extensions bar. For development, we recommend opening the `popup.html` file in its own tab by visiting `chrome-extension://<ext_id>/popup.html` (remember to replace `<ext_id>` with the extension's ID). You will need to refresh the page while you develop to see the changes you make.
+npm run dev
+
+    This will create a dist/ directory containing the bundled extension files.
+
+### 4. Load into Chrome
+
+    Open Chrome and go to chrome://extensions/
+
+    Enable Developer Mode (toggle at the top-right)
+
+    Click "Load unpacked"
+
+    Select the dist/ folder created in the previous step
+
+🔁 Rebuilding
+
+After making changes to the source files, simply re-run:
+
+npm run dev
+
+Then refresh the extension in Chrome (chrome://extensions) to apply updates.
