@@ -1,6 +1,7 @@
 **/__pycache__/
 dataset/
 **/onnxModels/
+**/Models/
 **/onnx/
 **.onnx
 **/package-lock.json
