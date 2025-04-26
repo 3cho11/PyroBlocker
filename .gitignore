@@ -3,6 +3,8 @@ dataset/
 **/onnxModels/
 **/unzipped/
 **/onnx/
+
+# chrome extension build files
 **.onnx
 **/package-lock.json
 **/build/
