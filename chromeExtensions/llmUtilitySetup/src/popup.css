@@ -1,0 +1,98 @@
+/* Styles go here */
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        Segoe UI,
+        Helvetica,
+        Arial,
+        sans-serif;
+    color: #222;
+}
+
+body {
+    margin: 0;
+    padding: 0.5rem;
+    background-color: #778da9;
+    width: 320px;
+    font-size: small;
+}
+
+h1 {
+    font-size: 50px;
+    text-align: center;
+    font-weight: 600;
+}
+
+h2 {
+    font-size: 35px;
+    text-align: center;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+h3 {
+    font-size: 25px;
+}
+
+
+#text {
+    width: 100%;
+    padding: 8px;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+#output {
+    font-size: 20px;
+    font-family: 'Roboto Mono', monospace;
+    height: 100px;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.input-container input {
+    width: 100%;
+    outline: none;
+    padding: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+/* SUBMIT BUTTON */
+.btn {
+    background-color: #1b263b;
+    color: white;
+    font-size: small;
+    cursor: pointer;
+    border-radius: 4px;
+    border: none;
+    padding: 0.5rem;
+}
+
+.btn:hover {
+    background-color: #d0d0d0;
+}
+
+.btn:disabled {
+    background-color: #a7a7a7;
+    color: rgb(255, 255, 255);
+    cursor: default;
+}
+
+.btn img {
+    width: 1rem;
+    height: 1rem;
+}

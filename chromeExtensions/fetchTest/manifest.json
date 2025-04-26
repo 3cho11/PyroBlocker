@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "Fetch Test",
+    "version": "1.0",
+    "permissions": [
+        "tabs",
+        "scripting"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
