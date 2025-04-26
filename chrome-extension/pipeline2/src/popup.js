@@ -1,1 +1,0 @@
-// popup.js - handles interaction with the extension's popup, sends requests to the

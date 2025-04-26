@@ -62,15 +62,9 @@ Then refresh the extension in Chrome (chrome://extensions) to apply updates.
 │   └── ...
 ├── localHostAdultPage/           
 │   └── index.html          # fake adult page to be used for testing on a local server to avoid accessing adult web-pages
-├── modelResearch           # exploratory data analysis and other model research
+├── model_data_research     # exploratory data analysis and other model / dataset research
 ├── Models                  # local download of candidate models
 ├── ...
+├── htmlData.zip            # adult dataset and safe dataset (in between in small enough to directly provided)
 └── README.md
 ```
-
-🧪 Testing
-
-Coming soon!
-
-Feel free to contribute, report issues, or suggest improvements.
-con
