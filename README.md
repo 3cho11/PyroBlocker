@@ -15,7 +15,7 @@ Follow these steps to build and run the extension locally:
 
 ```bash
 git clone https://github.com/3cho11/PyroBlocker
-cd your-repo-name
+cd Pyroblocker
 ```
 
 ### 2. Install dependencies
@@ -51,7 +51,7 @@ Then refresh the extension in Chrome (chrome://extensions) to apply updates.
 
 ## 📂 Project Structure
 ```bash
-├── chromeExtensions/       # all chrome extenions used during development
+├── chromeExtensions/       # all chrome extenions used during development as drafts for the final product
 │   └── ...
 ├── dataScraping/           
 │   └── raw_urls            # URL lists scraping was applied to
@@ -63,8 +63,8 @@ Then refresh the extension in Chrome (chrome://extensions) to apply updates.
 ├── localHostAdultPage/           
 │   └── index.html          # fake adult page to be used for testing on a local server to avoid accessing adult web-pages
 ├── model_data_research     # exploratory data analysis and other model / dataset research
-├── Models                  # local download of candidate models
-├── ...
+├── Models                  # necessary files for each candidate models
+├── PyroBlocker             # THE FINAL SOFTWARE
 ├── htmlData.zip            # adult dataset and safe dataset (in between in small enough to directly provided)
 └── README.md
 ```

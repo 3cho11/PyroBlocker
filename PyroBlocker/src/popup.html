@@ -1,0 +1,28 @@
+<!-- popup.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FEC001" />
+  <title>PyroBlocker</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <img id="logo" src="icons/icon128.png" alt="PyroBlocker Logo" />
+    <h1 id="title">PyroBlocker</h1>
+    <div id="subtitle" class="subtitle hidden">(disabled)</div>
+
+    <div class="controls">
+        <button id="enableBtn" class="btn enable">Enable</button>
+        <button id="disableBtn" class="btn disable">Disable</button>
+    </div>
+
+    <button id="showPasswordBtn" class="btn set-pwd">Set Password</button>
+    <div class="password-setup hidden">
+        <input type="password" id="newPassword" placeholder="Enter new password" />
+        <button id="setPasswordBtn" class="btn save-pwd">Save Password</button>
+    </div>
+</body>
+</html>
