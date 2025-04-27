@@ -55,6 +55,23 @@ input[type="password"] {
     color: #333;
 }
 
+.list-item-btn {
+    background-color: #eee;
+    border: none;
+    padding: 8px;
+    margin: 4px 0;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.list-item-btn:hover {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
 input::placeholder { color: grey; }
 
 .hidden { display: none; }    
