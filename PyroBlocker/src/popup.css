@@ -35,10 +35,14 @@ h1 {
     transition: transform 0.1s ease-in-out;
 }
 
+.controls {
+    margin-bottom: 0.6rem;
+}
 .btn.enable { background-color: #FEC001; }
 .btn.disable { background-color: #F83F01; color: #fff; }
-.btn.set-pwd, .btn.save-pwd { background-color: #FE8000; color: #fff; }
-
+.btn.set-pwd { background-color: #FE8000; color: #fff; }
+.btn.set-whitelist { background-color: #eeeeee; color: #333; }
+.btn.set-blacklist { background-color: #333; color: #fff; }
 .btn:hover { transform: scale(1.02); filter: brightness(1.1); }
 
 input[type="password"] {

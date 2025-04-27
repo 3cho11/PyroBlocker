@@ -100,12 +100,24 @@ const blockPage = async () => {
 
 
 // check if enabled
+(async function init() {
 
-const isEnabled = localStorage.getItem('pyroEnabled') === 'true';
-if (!isEnabled) {
-    console.log("____________EXTENSION DISABLED____________\n");
-}
-else {
+    // if disabled, do nothing
+    const isEnabled = localStorage.getItem('pyroEnabled') === 'true';
+    if (!isEnabled) {
+      console.log("____________EXTENSION DISABLED____________\n");
+      return;
+    }
+
+    // if current page is whitelisted, do nothing
+    const { whitelist = [] } = await chrome.storage.local.get('whitelist');
+    if (whitelist.includes(window.location.href)) {
+        console.log("____________PAGE IS WHITELISTED____________\n");
+        return;  // safe inside an async IIFE or function :contentReference[oaicite:5]{index=5}
+    }
+
+
+
     // data collection
 
     const pageData = getData();
@@ -163,4 +175,4 @@ else {
     if (final_prediction === "ADULT") {
         blockPage();
     }
-}
+})();

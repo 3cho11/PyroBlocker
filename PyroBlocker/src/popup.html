@@ -12,17 +12,42 @@
   <div class="container">
     <img id="logo" src="icons/icon128.png" alt="PyroBlocker Logo" />
     <h1 id="title">PyroBlocker</h1>
-    <div id="subtitle" class="subtitle hidden">(disabled)</div>
+    <div id="subtitle" class="subtitle hidden">(locked)</div>
 
-    <div class="controls">
-        <button id="enableBtn" class="btn enable">Enable</button>
-        <button id="disableBtn" class="btn disable">Disable</button>
+    <!-- Initial password entry -->
+    <div id="loginSection" class="auth-section">
+      <input type="password" id="entryPassword" placeholder="Enter password..." />
+      <button id="loginBtn" class="btn">Unlock</button>
+      <button id="setInitialBtn" class="btn" hidden>Set Password</button>
     </div>
 
-    <button id="showPasswordBtn" class="btn set-pwd">Set Password</button>
-    <div class="password-setup hidden">
+    <!-- Enable/Disable always available -->
+    <div class="controls">
+      <button id="enableBtn" class="btn enable">Enable</button>
+      <button id="disableBtn" class="btn disable">Disable</button>
+    </div>
+
+    <!-- Secondary controls locked until unlocked -->
+    <div id="secondaryControls" class="hidden">
+      <button id="showWhitelistBtn" class="btn set-whitelist">Whitelist URL</button>
+      <button id="showBlacklistBtn" class="btn set-blacklist">Blacklist URL</button>
+      <button id="showPasswordBtn" class="btn set-pwd">Change Password</button>
+
+      <div class="whitelist-section hidden">
+        <input type="url" id="whitelistUrl" placeholder="https://example.com" />
+        <button id="whitelistBtn" class="btn">Add to Whitelist</button>
+      </div>
+
+      <div class="blacklist-section hidden">
+        <input type="url" id="blacklistUrl" placeholder="https://example.com" />
+        <button id="blacklistBtn" class="btn">Add to Blacklist</button>
+      </div>
+
+      <div class="password-section hidden">
         <input type="password" id="newPassword" placeholder="Enter new password" />
         <button id="setPasswordBtn" class="btn save-pwd">Save Password</button>
+      </div>
     </div>
+  </div>
 </body>
 </html>
