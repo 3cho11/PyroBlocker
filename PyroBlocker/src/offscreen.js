@@ -24,7 +24,7 @@ const convertArraysToTensor = (batches) => {
         if (batch.input_ids) {
             // Convert each number in the array to BigInt
             const input_ids_bigint = batch.input_ids.map(id => BigInt(id));
-            
+
             // Create tensor using BigInt64Array
             tensors.input_ids = new ort.Tensor(
                 'int64',
@@ -37,7 +37,7 @@ const convertArraysToTensor = (batches) => {
         if (batch.attention_mask) {
             // Convert each number in the array to BigInt
             const attention_mask_bigint = batch.attention_mask.map(mask => BigInt(mask));
-            
+
             // Create tensor using BigInt64Array
             tensors.attention_mask = new ort.Tensor(
                 'int64',
@@ -145,8 +145,10 @@ class PipelineSingleton {
             // get model weights
             const model_weights = await this.getModelBuffer();
 
-            // set options for inference session - see https://github.com/microsoft/onnxruntime/blob/main/include/onnxruntime/core/session/onnxruntime_session_options_config_keys.h
-            const opt = {
+            console.log("ABOUT TO MAKE SESSION");
+            const hasWebGPU = ort.env.webgpu?.enabled === true;
+
+            const options = hasWebGPU ? {
                 executionProviders: [{
                     name: "webgpu",
                     preferredLayout: "NHWC"
@@ -163,9 +165,15 @@ class PipelineSingleton {
                         disable_cpu_ep_fallback: "0",
                     }
                 }
+            } : {
+                executionProviders: ["wasm"], // fallback to CPU WebAssembly
+                enableProfiling: false,
+                enableMemPattern: false,
+                enableCpuMemArena: true, // better for CPU
             };
-            // create inference session
-            this.session = await ort.InferenceSession.create(model_weights, opt);
+
+            console.log(`Creating session using ${hasWebGPU ? "WebGPU" : "CPU (WASM)"}`);
+            this.session = await ort.InferenceSession.create(model_weights, options);
             console.log("session created:", this.session);
         }
         return this.session;
@@ -265,7 +273,7 @@ async function encoderForward(session, model_inputs) {
 
 
 const classify = async (batches) => {
-    
+
     // convert batches to tensors
     const model_inputs = convertArraysToTensor(batches);
 
@@ -304,9 +312,9 @@ const classify = async (batches) => {
     for (let i = 0; i < (num_sentences * num_categories); i += num_categories) {
         logit_tuples.push(logits_array.slice(i, i + num_categories));
     }
-    console.log("logit_tuples:",logit_tuples);
+    console.log("logit_tuples:", logit_tuples);
     const probability_tuples = logit_tuples.map(softmax);
-    console.log("probability_tuples:",probability_tuples);
+    console.log("probability_tuples:", probability_tuples);
 
     const label_indices_and_scores = probability_tuples.map(probabilities => {
         const maxProb = Math.max(...probabilities);
@@ -317,23 +325,23 @@ const classify = async (batches) => {
     const scores = label_indices_and_scores.map(([index, score]) => {
         return index === 0 ? -score : score;
     });
-    console.log("scores:",scores);
+    console.log("scores:", scores);
 
     // returns array of scores
     return { scores, inference_time };
-    
+
 }
 
 chrome.runtime.onConnect.addListener((port) => {
     if (port.name === "offscreen") {
         console.log("background-offscreen connection established");
 
-        port.onMessage.addListener( async (message) => {
+        port.onMessage.addListener(async (message) => {
             if (message.action === "classify") {
                 console.log("Classify request:", message.data);
                 const data = await classify(message.data);
                 // const raw_scores = "test";
-                port.postMessage({ success: true, data});
+                port.postMessage({ success: true, data });
             }
         });
 

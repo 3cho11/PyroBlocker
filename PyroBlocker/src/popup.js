@@ -1,5 +1,5 @@
 // popup.js
-(async function() {
+(async function () {
     const titleEl = document.getElementById('title');
     const subtitleEl = document.getElementById('subtitle');
     const loginSection = document.getElementById('loginSection');
@@ -28,7 +28,10 @@
     const setPasswordBtn = document.getElementById('setPasswordBtn');
 
     let storedPassword = localStorage.getItem('pyroPassword');
-    let isEnabled = localStorage.getItem('pyroEnabled') === 'true';
+
+    let isEnabled = false;
+    const { pyroEnabled } = await chrome.storage.local.get('pyroEnabled');
+    isEnabled = pyroEnabled === true;
 
     function crop(url) {
         if (url.length <= 40) return url;
@@ -51,60 +54,68 @@
             listDiv.appendChild(btn);
         });
     }
-    
+
 
     function updateEnableUI() {
-    titleEl.style.color = isEnabled ? '' : 'grey';
-    enableBtn.hidden = isEnabled;
-    const unlocked = !secondaryControls.classList.contains('hidden');
-    disableBtn.hidden = !(isEnabled && unlocked);
+        titleEl.style.color = isEnabled ? '' : 'grey';
+        enableBtn.hidden = isEnabled;
+        const unlocked = !secondaryControls.classList.contains('hidden');
+        disableBtn.hidden = !(isEnabled && unlocked);
     }
 
     function lockUI() {
-    subtitleEl.textContent = '(locked)';
-    subtitleEl.classList.remove('hidden');
-    secondaryControls.classList.add('hidden');
-    updateEnableUI();
+        subtitleEl.textContent = '(locked)';
+        subtitleEl.classList.remove('hidden');
+        secondaryControls.classList.add('hidden');
+        updateEnableUI();
     }
 
     function unlockUI() {
-    loginSection.classList.add('hidden');
-    subtitleEl.textContent = '';
-    subtitleEl.classList.add('hidden');
-    secondaryControls.classList.remove('hidden');
-    updateEnableUI();
+        loginSection.classList.add('hidden');
+        subtitleEl.textContent = '';
+        subtitleEl.classList.add('hidden');
+        secondaryControls.classList.remove('hidden');
+        updateEnableUI();
     }
 
     if (!storedPassword) {
-    setInitialBtn.hidden = false;
-    loginBtn.hidden = true;
+        setInitialBtn.hidden = false;
+        loginBtn.hidden = true;
     }
     lockUI();
 
     setInitialBtn.addEventListener('click', () => {
-    const pwd = entryPassword.value.trim();
-    if (!pwd) { alert('Enter a valid new password'); return; }
-    localStorage.setItem('pyroPassword', pwd);
-    storedPassword = pwd;
-    alert('Password set. Please re-enter to unlock.');
-    entryPassword.value = '';
-    setInitialBtn.hidden = true;
-    loginBtn.hidden = false;
+        const pwd = entryPassword.value.trim();
+        if (!pwd) { alert('Enter a valid new password'); return; }
+        localStorage.setItem('pyroPassword', pwd);
+        storedPassword = pwd;
+        alert('Password set. Please re-enter to unlock.');
+        entryPassword.value = '';
+        setInitialBtn.hidden = true;
+        loginBtn.hidden = false;
     });
 
     loginBtn.addEventListener('click', () => {
-    if (entryPassword.value === storedPassword) unlockUI(); else alert('Incorrect password');
-    entryPassword.value = '';
+        if (entryPassword.value === storedPassword) unlockUI();
+        else alert('Incorrect password');
+        entryPassword.value = '';
+        console.log("isEnabled: ", isEnabled);
     });
 
     enableBtn.addEventListener('click', () => {
-    isEnabled = true; localStorage.setItem('pyroEnabled', 'true'); updateEnableUI();
+        isEnabled = true;
+        updateEnableUI();
+        chrome.storage.local.set({ pyroEnabled: true });
     });
 
     disableBtn.addEventListener('click', async () => {
-    const attempt = prompt('Enter password to disable:');
-    if (attempt === storedPassword) { isEnabled = false; localStorage.setItem('pyroEnabled','false'); updateEnableUI(); }
-    else alert('Incorrect password');
+        const attempt = prompt('Enter password to disable:');
+        if (attempt === storedPassword) {
+            isEnabled = false;
+            updateEnableUI();
+            chrome.storage.local.set({ pyroEnabled: false });
+        }
+        else alert('Incorrect password');
     });
 
     // store original labels
@@ -125,36 +136,36 @@
         if (panelVisible && listKey) renderList(listKey, listDiv);
     }
 
-    showWhitelistBtn.addEventListener('click', () => togglePanel(showWhitelistBtn, whitelistDiv,'whitelist', whitelistList));
-    showBlacklistBtn.addEventListener('click', () => togglePanel(showBlacklistBtn, blacklistDiv,'blacklist', blacklistList));
+    showWhitelistBtn.addEventListener('click', () => togglePanel(showWhitelistBtn, whitelistDiv, 'whitelist', whitelistList));
+    showBlacklistBtn.addEventListener('click', () => togglePanel(showBlacklistBtn, blacklistDiv, 'blacklist', blacklistList));
     showPasswordBtn.addEventListener('click', () => togglePanel(showPasswordBtn, passwordSection));
 
     whitelistBtn.addEventListener('click', async () => {
         console.log('Whitelist button clicked');
-        const url=whitelistInput.value.trim();
-        const {whitelist=[]}=await chrome.storage.local.get('whitelist'); 
-        if (!whitelist.includes(url)) { 
+        const url = whitelistInput.value.trim();
+        const { whitelist = [] } = await chrome.storage.local.get('whitelist');
+        if (!whitelist.includes(url)) {
             console.log("Adding to whitelist:", url);
-            whitelist.push(url); 
-            await chrome.storage.local.set({ whitelist }); 
-            whitelistInput.value=''; 
+            whitelist.push(url);
+            await chrome.storage.local.set({ whitelist });
+            whitelistInput.value = '';
             renderList('whitelist', whitelistList);
         } else {
-            whitelistInput.value=''; 
+            whitelistInput.value = '';
             renderList('whitelist', whitelistList);
         }
     });
 
     blacklistBtn.addEventListener('click', async () => {
-        const url=blacklistInput.value.trim(); 
-        const {blacklist=[]}=await chrome.storage.local.get('blacklist'); 
-        if (!blacklist.includes(url)) { 
-            blacklist.push(url); 
+        const url = blacklistInput.value.trim();
+        const { blacklist = [] } = await chrome.storage.local.get('blacklist');
+        if (!blacklist.includes(url)) {
+            blacklist.push(url);
             await chrome.storage.local.set({ blacklist });
-            whitelistInput.value='';  
+            whitelistInput.value = '';
             renderList('blacklist', blacklistList);
         } else {
-            blacklistInput.value=''; 
+            blacklistInput.value = '';
             renderList('blacklist', blacklistList);
         }
     });

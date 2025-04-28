@@ -26,7 +26,7 @@ const getData = () => {
     // 2. Title: Prefer meta tags if available, otherwise fallback to document.title
     let title = '';
     const metaTitle = document.querySelector('meta[name="title"]') ||
-                        document.querySelector('meta[property="og:title"]');
+        document.querySelector('meta[property="og:title"]');
     if (metaTitle && metaTitle.getAttribute("content")) {
         title = metaTitle.getAttribute("content").trim();
     } else {
@@ -36,23 +36,23 @@ const getData = () => {
     // 3. Description: Check for meta description tags
     let description = '';
     const metaDescription = document.querySelector('meta[name="description"]') ||
-                            document.querySelector('meta[property="og:description"]');
+        document.querySelector('meta[property="og:description"]');
     if (metaDescription && metaDescription.getAttribute("content")) {
         description = metaDescription.getAttribute("content").trim();
     }
 
     // 4. <h> elements: Collect main (<h1>) and secondary (<h2>) headers
     const h1_elements = Array.from(document.querySelectorAll("h1"))
-                            .map(h1 => h1.textContent.trim())
-                            .filter(text => text.length > 0);
+        .map(h1 => h1.textContent.trim())
+        .filter(text => text.length > 0);
     const h2_elements = Array.from(document.querySelectorAll("h2"))
-                            .map(h2 => h2.textContent.trim())
-                            .filter(text => text.length > 0);
+        .map(h2 => h2.textContent.trim())
+        .filter(text => text.length > 0);
 
     // 5. <p> elements: Collect text from all <p> tags (filtering out empties)
     const p_elements = Array.from(document.querySelectorAll("p"))
-    .map(p => p.textContent.trim())
-    .filter(text => text.length > 0);
+        .map(p => p.textContent.trim())
+        .filter(text => text.length > 0);
 
     // 6. Links: Separate into internal and external
     const allLinks = Array.from(document.querySelectorAll("a[href]"));
@@ -103,20 +103,34 @@ const blockPage = async () => {
 (async function init() {
 
     // if disabled, do nothing
-    const isEnabled = localStorage.getItem('pyroEnabled') === 'true';
+    const { pyroEnabled } = await chrome.storage.local.get('pyroEnabled');
+    const isEnabled = pyroEnabled === true;
+    console.log('isEnabled:', isEnabled);
     if (!isEnabled) {
-      console.log("____________EXTENSION DISABLED____________\n");
-      return;
+        console.log("____________EXTENSION DISABLED____________\n");
+        return; // Early return stops the whole async init function
     }
+
+
 
     // if current page is whitelisted, do nothing
     const { whitelist = [] } = await chrome.storage.local.get('whitelist');
     if (whitelist.includes(window.location.href)) {
         console.log("____________PAGE IS WHITELISTED____________\n");
-        return;  // safe inside an async IIFE or function :contentReference[oaicite:5]{index=5}
+        return;  // Early return stops the whole async init function
+    }
+
+    // if current page is blacklisted, block it
+    const { blacklist = [] } = await chrome.storage.local.get('blacklist');
+    if (blacklist.includes(window.location.href)) {
+        console.log("____________PAGE IS BLACKLISTED____________\n");
+        blockPage();
+        return;  // Early return stops the whole async init function
     }
 
 
+
+    // do inference
 
     // data collection
 
@@ -132,7 +146,7 @@ const blockPage = async () => {
         p_elements: pageData.p_elements
     };
 
-    const pipeline = new ClassificationPipeline(5,5,5);
+    const pipeline = new ClassificationPipeline(5, 5, 5);
 
 
     // pre-processing
@@ -142,7 +156,7 @@ const blockPage = async () => {
 
 
     // tokenization
-        
+
     const tokenizer = await pipeline.getTokenizer();
 
     const encoded_textData = await pipeline.tokenize(preprocessed_textData, tokenizer);
@@ -158,8 +172,8 @@ const blockPage = async () => {
 
     // classification (content -> background -> offscreen)
 
-    const {scores, inference_time } = await pipeline.classify(batches);
-    console.log("____________LLM SCORES____________\n (fields with missing values set to 0)\n\n" 
+    const { scores, inference_time } = await pipeline.classify(batches);
+    console.log("____________LLM SCORES____________\n (fields with missing values set to 0)\n\n"
         + JSON.stringify(scores, null, 2));
     console.log("____________INFERENCE TIME____________\n\n" + inference_time + " ms");
 
