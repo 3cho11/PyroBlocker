@@ -2,7 +2,7 @@
 
 import { PreTrainedTokenizer } from '@xenova/transformers';
 
-export class ClassificationPipeline {    
+export class ClassificationPipeline {
     /**
      * Creates an instance of the class with specified lengths for various elements.
      * 
@@ -12,7 +12,7 @@ export class ClassificationPipeline {
      * @param {number} [p_LENGTH=1] - number of paragraph elements to do classification on
      * 
      */
-    constructor(h1_LENGTH=1, h2_LENGTH=1, p_LENGTH=1) {
+    constructor(h1_LENGTH = 1, h2_LENGTH = 1, p_LENGTH = 1) {
         this.offscreenPortName = "offscreen";
         // for cropping
         this.h1_LENGTH = h1_LENGTH;
@@ -33,7 +33,7 @@ export class ClassificationPipeline {
             }
             return false;
         };
-    
+
         const cropObject = (value, crop) => {
             const keys = Object.keys(value);
             const cropped = {};
@@ -46,27 +46,27 @@ export class ClassificationPipeline {
             }
             return cropped;
         };
-    
+
         const replacer = (key, value) => {
             if (typeof value === 'bigint') {
                 return value.toString();
             }
-    
+
             if (Array.isArray(value) && crop && value.length > crop) {
                 return value.slice(0, crop).concat(`... and ${value.length - crop} more`);
             }
-    
+
             if (typeof value === 'string' && crop && value.length > crop) {
                 return value.slice(0, crop) + `... and ${value.length - crop} more chars`;
             }
-    
+
             if (isNumericKeyedObject(value) && crop) {
                 return cropObject(value, crop);
             }
-    
+
             return value;
         };
-    
+
         try {
             return JSON.stringify(obj, replacer, 2);
         } catch (err) {
@@ -145,35 +145,35 @@ export class ClassificationPipeline {
         function hybridLabelConcat(textData) {
             // Define the order & labels you want
             const fieldOrder = [
-            "title",
-            "description",
-            "h1_elements",
-            "h2_elements",
-            "p_elements"
+                "title",
+                "description",
+                "h1_elements",
+                "h2_elements",
+                "p_elements"
             ];
             const labels = {
-            title:       "Title: ",
-            description: "Description: ",
-            p_elements:  "Body: ",
-            h1_elements: "Main heading(s): ",
-            h2_elements: "Subheading(s): "
+                title: "Title: ",
+                description: "Description: ",
+                p_elements: "Body: ",
+                h1_elements: "Main heading(s): ",
+                h2_elements: "Subheading(s): "
             };
-        
+
             const parts = [];
             for (const key of fieldOrder) {
-            if (!(key in textData)) continue;
-            let value = textData[key];
-            
-            // Skip empty
-            if (typeof value !== "string" || !value.trim()) continue;
-        
-            parts.push(`${labels[key]} ${value.trim()}`);
+                if (!(key in textData)) continue;
+                let value = textData[key];
+
+                // Skip empty
+                if (typeof value !== "string" || !value.trim()) continue;
+
+                parts.push(`${labels[key]} ${value.trim()}`);
             }
-        
+
             // join with '\n' (line breaks)
             return parts.join("\n");
         }
-        
+
         // remove duplicates from each array in textData
         const no_duplicates_textData = removeDuplicatesFromArrays(textData);
         // crop number of array elements to pre-decided size
@@ -182,7 +182,7 @@ export class ClassificationPipeline {
         const one_element_per_field_textData = combineSentences(cropped_textData);
         // combine all fields into a single string with labels
         const labelled_string = hybridLabelConcat(one_element_per_field_textData);
-        
+
         return labelled_string;
     }
 
@@ -229,7 +229,7 @@ export class ClassificationPipeline {
     }
 
     async getTokenizer() {
-        
+
         const message = {
             action: "getTokenizer"
         };
@@ -253,15 +253,15 @@ export class ClassificationPipeline {
         // tensors use BigInt under the hood preventing them being send between scripts without serialisation
         // thus, it is more efficient to use regular arrays
         const encoded_textData = tokenizer(textData, {
-            padding:    false,
+            padding: false,
             truncation: false,
             add_special_tokens: true,
             return_tensor: false
-        });        
-      
+        });
+
         return encoded_textData;
     };
-      
+
 
     batch = (encoded_textData, tokenizer) => {
 
@@ -324,11 +324,11 @@ export class ClassificationPipeline {
         };
 
         const batches = smartBatching(encoded_textData);
-    
+
         return batches;
     };
 
-    
+
 
     /**
      * Classifies the elements in the provided page data.
@@ -371,7 +371,7 @@ export class ClassificationPipeline {
      * @param {number} [p=1] - The power to which each element is raised. Defaults to 1 (arithmetic mean).
      * @returns {number} The power mean of the array.
      */
-    powerMean = (arr, p=1) => {
+    powerMean = (arr, p = 1) => {
         // define a function to compute powers while maintaining the sign
         const power = (x, p) => {
             if (x < 0) {
@@ -393,6 +393,8 @@ export class ClassificationPipeline {
     }
 
 
+
+    // *not used in this version
     /**
      * Logistic regression to get a singular value from the pageData
      * 
