@@ -4,6 +4,7 @@
 
 - [Node.js](https://nodejs.org/) (v16 or later recommended)
 - npm (comes with Node.js)
+- git LFS (to be able to pull the model)
 
 ## 🔧 Setup Instructions
 
@@ -14,6 +15,9 @@ Follow these steps to build and run the extension locally:
 ```bash
 git clone https://github.com/3cho11/PyroBlocker
 cd Pyroblocker
+cd public
+unzip onnx.zip # (requires git lfs)
+cd ..
 ```
 
 ### 2. Install dependencies
