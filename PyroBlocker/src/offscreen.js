@@ -145,7 +145,6 @@ class PipelineSingleton {
             // get model weights
             const model_weights = await this.getModelBuffer();
 
-            console.log("ABOUT TO MAKE SESSION");
             const hasWebGPU = ort.env.webgpu?.enabled === true;
 
             const options = hasWebGPU ? {
