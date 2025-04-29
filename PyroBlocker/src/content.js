@@ -95,7 +95,7 @@ const getData = () => {
 
 const blockPage = async () => {
     console.log("____________BLOCKING PAGE____________\n");
-    // location.replace("https://www.google.com");
+    location.replace("https://www.google.com"); // redict to google
 }
 
 
