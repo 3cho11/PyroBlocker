@@ -24,32 +24,21 @@ const createOffscreen = async () => {
     });
 }
 
+/**
+ * Classifies the given data using an offscreen document and a classification pipeline.
+ * Ensures that an offscreen document is created before performing the classification.
+ *
+ * @async
+ * @function classify
+ * @param {Object} data - The data to be classified.
+ * @returns {Promise<Object>} - A promise that resolves to the classification result.
+ * @throws {Error} - Throws an error if the classification process fails.
+ */
 const classify = async (data) => {
     await createOffscreen();
     const pipeline = new ClassificationPipeline();
     return pipeline.classifyInOffscreen(data);
 }
-//////////////////////////////////////////////////////////////
-
-////////////////////// 2. Message Events /////////////////////
-//
-// chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-//     if (message.target === "background" && message.action === "classify") {
-//         console.log("Classify request:", message.pageData);
-//         try {
-//             await createOffscreen();
-//             const pipeline = new ClassificationPipeline();
-//             const raw_scores = await pipeline.classifyInOffscreen(message.pageData);
-//             console.log("raw_scores in background:", raw_scores);
-//             sendResponse({ success: true, result: raw_scores });
-//         } catch (error) {
-//             console.error("Error during classification:", error);
-//             sendResponse({ success: false, error: error.message });
-//         }
-//         return true; // Indicates that the response will be sent asynchronously
-//     }
-//     return;
-// });
 
 
 chrome.runtime.onConnect.addListener((port) => {
@@ -71,7 +60,7 @@ chrome.runtime.onConnect.addListener((port) => {
                     } catch (e) {
                         console.warn("Optional special_tokens_map.json failed to load:", e);
                     }
-        
+
                     port.postMessage({
                         success: true,
                         data: {
@@ -98,7 +87,7 @@ chrome.runtime.onConnect.addListener((port) => {
                 }
             }
 
-            
+
         });
 
         port.onDisconnect.addListener(() => {

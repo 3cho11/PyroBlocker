@@ -186,7 +186,12 @@ export class ClassificationPipeline {
         return labelled_string;
     }
 
-
+    /**
+     * sendPortMessage - Sends a message to a specified port and returns the response.
+     * @param {String} port_name 
+     * @param {Object} message 
+     * @returns {Promise} - A promise that resolves with the response from the port.
+     */
     sendPortMessage = async (port_name, message) => {
         // Wrap chrome.runtime.sendMessage in a Promise so we can await it
         return new Promise((resolve, reject) => {
@@ -227,7 +232,10 @@ export class ClassificationPipeline {
             throw error; // Optionally rethrow to propagate it further
         });
     }
-
+    /**
+     * getTokenizer - Retrieves the tokenizer from the background script.
+     * @returns {PreTrainedTokenizer} tokenizer instance
+     */
     async getTokenizer() {
 
         const message = {
@@ -248,6 +256,12 @@ export class ClassificationPipeline {
         return tokenizer;
     }
 
+    /**
+     * tokenize - Tokenizes the provided text data using the specified tokenizer.
+     * @param {Object} textData 
+     * @param {Object} tokenizer 
+     * @returns {Promise} - A promise that resolves with the tokenized data.
+     */
     tokenize = async (textData, tokenizer) => {
 
         // tensors use BigInt under the hood preventing them being send between scripts without serialisation
@@ -262,7 +276,12 @@ export class ClassificationPipeline {
         return encoded_textData;
     };
 
-
+    /**
+     * batch - Splits the tokenized data into batches based on the specified maximum length.
+     * @param {Object} encoded_textData 
+     * @param {Object} tokenizer 
+     * @returns {Array} - An array of batches, each containing input_ids and attention_mask.
+     */
     batch = (encoded_textData, tokenizer) => {
 
         const max_length = tokenizer.config.model_max_length || 512; // Default to 512 if not specified
