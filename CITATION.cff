@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Neil"
+    given-names: "Jacob"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "PyroBlocker"
+version: 1.0.0
+date-released: 2025-04-29
+url: "https://github.com/3cho11/PyroBlocker"
+project: "https://github.com/users/3cho11/projects/4"
