@@ -88,12 +88,11 @@ This project is released under the MS-RSL license. See the [LICENSE](LICENSE) fi
 
 If you use PyroBlocker in your research, please cite:
 ```bibtex
-@software{Smith_PyroBlocker_2025,
-  author       = {Jacob Smith},
+@software{Neil_PyroBlocker_2025,
+  author       = {Jacob Neil},
   title        = {{PyroBlocker}: Local Web-Page Adult Content Classifier},
   version      = {1.0.0},
   date         = {2025-04-29},
   url          = {https://github.com/3cho11/PyroBlocker},
-  doi          = {10.5281/zenodo.YOUR_DOI_HERE}
 }
 ```
